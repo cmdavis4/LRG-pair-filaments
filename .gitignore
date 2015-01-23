@@ -45,8 +45,11 @@ Temporary Items
 
 # LINUX
 # =========================
-
 *~
+
+#ignore the machine-specific user settings
+user_settings.py
+
 
 #python files
 *.pyc
