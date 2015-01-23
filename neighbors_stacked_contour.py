@@ -1,10 +1,8 @@
-import csv
 import numpy as np
 import matplotlib.pyplot as plt
 import bisect as bs
 import math
 import scipy.integrate as si
-import sys
 import numpy.linalg as LA
 
 pair_range = range(10000, 11000)
@@ -14,13 +12,20 @@ xinc = 6. / xbins
 yinc = 6. / ybins
 xbin_ledge = np.linspace(-3, 3, xbins)
 ybin_ledge = np.linspace(-3, 3, ybins)
-neighbor_ra_ind = 2
-neighbor_dec_ind = 3
+neighbor_id_ind = 0
+neighbor_ra_ind = 1
+neighbor_dec_ind = 2
+neighbor_z_ind = 3
+lrg_id_ind = 0
 omega_m = .3
 omega_l = .7
 omega_k = 0
 Dh = 3000. #h^-1 * Mpc
-
+neighbor_path = 'neighbors.cat'
+pair_path = 'pairs.cat'
+out_dir = ''
+#neighbor_path = '/home/chadavis/catalog_creation/astro_image_processing/LRG/data/ra_dec_z.cat'
+#pair_path = '/data2/scratch/pairs_6_10.txt'
 neighbors = []
 
 #Angular diameter distance of an object at redshift z
@@ -39,8 +44,6 @@ def angDiamDist(z1, z2):
     Da12 = (1 / (1 + z2)) * (Dm(z2) - Dm(z1))
     return Da12
 
-#########
-
 def to_sphere(point):
     """accepts a x,y,z, coordinate and returns the same point in spherical coords (r, theta, phi) i.e. (r, azimuthal angle, altitude angle) with phi=0 in the zhat direction and theta=0 in the xhat direction"""
     coord = (np.sqrt(np.sum(point**2)),
@@ -57,8 +60,6 @@ def to_cartesian(point):
     
     
     return coord
-            
-
 def rotate(p1, p2, p3):
     """rotates coordinate axis so that p1 is at the pole of a new spherical coordinate system and p2 lies on phi (or azimuthal angle) = 0
 
@@ -98,8 +99,6 @@ s3:transformed vector of p3
     return s1, s2, s3
 
 
-###############
-
 def calc_distance(ra1, dec1, ra2, dec2):
     '''Calculate the circular angular distance of two points on a sphere.'''
     lambda_diff = ra1  - ra2
@@ -116,22 +115,25 @@ def calc_distance(ra1, dec1, ra2, dec2):
 ###############
 
 print('Reading neighbors...')
-neighbors = np.loadtxt('/home/chadavis/catalog_creation/astro_image_processing/LRG/data/ra_dec_z.cat')
+neighbors = np.loadtxt(neighbor_path)
 ids = np.array(neighbors[:,0], dtype = np.int64)        
 
 print('Reading pairs...')
-pairs = np.loadtxt('/data2/scratch/pairs_6_10.txt', skiprows = 1)
+pairs = np.loadtxt(pair_path, skiprows = 1)
+
+#####DELETE AFTER TESTING#########
+pair_range = range(len(pairs))
+##################################
 
 objects = np.zeros(shape=(len(neighbors), 4))
-objects[:,0] = neighbors[:,0] #id
+objects[:,0] = neighbors[:,neighbor_id_ind] #id
 objects[:,1] = neighbors[:,neighbor_ra_ind] #ra
 objects[:,2] = neighbors[:,neighbor_dec_ind] #dec
-objects[:,3] = neighbors[:,4] #z
+objects[:,3] = neighbors[:,neighbor_z_ind] #z
 
 print('Sorting neighbors...')
 objects = np.array(sorted(objects, key = lambda x: x[0]), dtype=np.float64)
 ids = sorted(ids)
-assert(ids[0] == objects[0,0])
 
 offset = 0
 grid = np.zeros(shape=(xbins, ybins))
@@ -140,6 +142,7 @@ total_neighbs = 0
 oob_lrgs = 0
 for i in pair_range:
     curr = pairs[i]
+    lrg_id = curr[lrg_id_ind]
 
     ra_mid = np.radians(curr[1])
     dec_mid = np.radians(curr[2])
@@ -149,8 +152,8 @@ for i in pair_range:
     dec_2 = np.radians(curr[11])
     lrg_add = angDiamDistSingle(curr[3])
     
-    left_ind = bs.bisect_left(ids, np.int64(curr[0]))
-    right_ind = bs.bisect(ids, np.int64(curr[0]))
+    left_ind = bs.bisect_left(ids, np.int64(lrg_id))
+    right_ind = bs.bisect(ids, np.int64(lrg_id))
     subset = objects[left_ind:right_ind]
     subset[:,1:3] = np.radians(subset[:,1:3])
     total_neighbs+=len(subset)
@@ -163,16 +166,25 @@ for i in pair_range:
         neighb = np.array([1., subset[j, 1], subset[j, 2]], dtype = np.float64)
         mid_rot, right_rot, neighbs_rot[j,] = rotate(mid, right, neighb)
         adds[j] = angDiamDistSingle(subset[j,3])
+    
         
-    lrg_radius = calc_distance(mid_rot[1], mid_rot[2], right_rot[1], right_rot[2]) * lrg_add
-    #print '%f, %f' % (lrg_radius / lrg_add, lrg_add)
+    lrg_radius = calc_distance(mid_rot[1], mid_rot[2],
+                               right_rot[1], right_rot[2]) * lrg_add
+
+    
+    print (calc_distance(mid[1], mid[2],
+                        right[1], right[2]) * lrg_add)
+    print lrg_radius
+    
+
     if (lrg_radius > 10 or lrg_radius < 6):
         oob_lrgs+=1
         continue
     #print lrg_radius
 
     for j in range(len(subset)):
-        r = calc_distance(mid_rot[1], mid_rot[2], neighbs_rot[j, 1], neighbs_rot[j, 2]) * lrg_add
+        r = calc_distance(mid_rot[1], mid_rot[2],
+                          neighbs_rot[j, 1], neighbs_rot[j, 2]) * lrg_add
         if (r < -15 or r > 15):
             outOfGrid += 1
             continue
@@ -186,10 +198,11 @@ for i in pair_range:
         ybin = bs.bisect(ybin_ledge, y) - 1
         grid[xbin, ybin] += 1
 
-print(grid)
-print('%d LRGs thrown out.' % oob_lrgs)
-print('%d thrown out.' % outOfGrid)
-print(total_neighbs)
+print '%d LRGs thrown out.' % oob_lrgs
+print '%d total LRGs.' % len(pairs)
+print '%d neighbors thrown out.' % outOfGrid
+print '%d total neighbors.' % total_neighbs
+
 fig = plt.figure()
 ax = fig.add_subplot(1, 1, 1)
 circ_1 = plt.Circle((.5, 0), radius = .05, color = 'b')
@@ -202,9 +215,11 @@ plt.contour(x, y, grid)
 #plt.scatter(xs, ys)
 plt.xlabel('[R_sep]')
 plt.ylabel('[R_sep]')
-plt.title('Objects neighboring LRG pairs %d through %d' % (min(pair_range), max(pair_range)))
+plt.title('Objects neighboring LRG pairs %d through %d'
+          % (min(pair_range), max(pair_range)))
 ax.add_artist(circ_1)
 ax.add_artist(circ_2)
 ax.add_artist(circ_mid)
-plt.savefig('/home/chadavis/catalog_creation/scatter_plots/scatter_scaled_stacked_%d_%d' % (min(pair_range), max(pair_range)))
+plt.savefig(out_dir + '/scatter_scaled_stacked_%d_%d'
+            % (min(pair_range), max(pair_range)))
 plt.show()
