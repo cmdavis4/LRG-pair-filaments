@@ -16,13 +16,23 @@ xbins = 10
 ybins = 10
 xinc = 6. / xbins
 yinc = 6. / ybins
-xbin_ledge = np.linspace(-3, 3, xbins)
-ybin_ledge = np.linspace(-3, 3, ybins)
+xbin_ledge = np.linspace(-3, 3, xbins + 1)
+ybin_ledge = np.linspace(-3, 3, ybins + 1)
+xbin_ledge = xbin_ledge[1:]
+ybin_ledge = ybin_ledge[1:]
+
 neighbor_id_ind = 0
 neighbor_ra_ind = 1
 neighbor_dec_ind = 2
-neighbor_z_ind = 3
 lrg_id_ind = 0
+mid_ra_ind = 1
+mid_dec_ind = 2
+lrg_z_ind = 3
+lrg1_ra_ind = 5
+lrg1_dec_ind = 6
+lrg2_ra_ind = 10
+lrg2_dec_ind = 11
+
 neighbor_path = 'neighbors.cat'
 pair_path = 'pairs.cat'
 out_dir = ''
@@ -51,6 +61,8 @@ print('Sorting neighbors...')
 objects = np.array(sorted(objects, key = lambda x: x[0]), dtype=np.float64)
 ids = sorted(ids)
 
+xs = []
+ys = []
 offset = 0
 grid = np.zeros(shape=(xbins, ybins))
 outOfGrid = 0
@@ -59,14 +71,13 @@ oob_lrgs = 0
 for i in pair_range:
     curr = pairs[i]
     lrg_id = curr[lrg_id_ind]
-
-    ra_mid = np.radians(curr[1])
-    dec_mid = np.radians(curr[2])
-    ra_1 = np.radians(curr[5])
-    dec_1 = np.radians(curr[6])
-    ra_2 = np.radians(curr[10])
-    dec_2 = np.radians(curr[11])
-    lrg_add = angDiamDistSingle(curr[3])
+    ra_mid = np.radians(curr[mid_ra_ind])
+    dec_mid = np.radians(curr[mid_dec_ind])
+    ra_1 = np.radians(curr[lrg1_ra_ind])
+    dec_1 = np.radians(curr[lrg1_dec_ind])
+    ra_2 = np.radians(curr[lrg2_ra_ind])
+    dec_2 = np.radians(curr[lrg2_dec_ind])
+    lrg_add = angDiamDistSingle(curr[lrg_z_ind])
     
     left_ind = bs.bisect_left(ids, np.int64(lrg_id))
     right_ind = bs.bisect(ids, np.int64(lrg_id))
@@ -93,7 +104,7 @@ for i in pair_range:
     print lrg_radius
     
 
-    if (lrg_radius > 10 or lrg_radius < 6):
+    if (lrg_radius > 5 or lrg_radius < 3):
         oob_lrgs+=1
         continue
     #print lrg_radius
@@ -108,10 +119,15 @@ for i in pair_range:
         scaled_radius = r / lrg_radius
         x = np.cos(neighbs_rot[j, 1]) * scaled_radius
         y = np.sin(neighbs_rot[j, 1]) * scaled_radius
+        
+        xs.append(x)
+        ys.append(y)
+        
         #print '%f, %f' % (x, y)
         #print ''
-        xbin = bs.bisect(xbin_ledge, x) - 1
-        ybin = bs.bisect(ybin_ledge, y) - 1
+        xbin = bs.bisect(xbin_ledge, x)
+        ybin = bs.bisect(ybin_ledge, y)
+        #print '%f : %f : %f' % (xbin_ledge[xbin - 1], x, xbin_ledge[xbin])
         grid[xbin, ybin] += 1
 
 print '%d LRGs thrown out.' % oob_lrgs
@@ -124,6 +140,9 @@ ax = fig.add_subplot(1, 1, 1)
 circ_1 = plt.Circle((.5, 0), radius = .05, color = 'b')
 circ_2 = plt.Circle((-.5, 0), radius = .05, color = 'g')
 circ_mid = plt.Circle((0, 0), radius = .05, color = 'r')
+
+#plt.scatter(xs, ys)
+
 x = np.linspace(-3, 3, xbins)
 y = np.linspace(-3, 3, ybins)
 X, Y = np.meshgrid(x, y)
