@@ -128,7 +128,7 @@ for i in pair_range:
         xbin = bs.bisect(xbin_ledge, x)
         ybin = bs.bisect(ybin_ledge, y)
         #print '%f : %f : %f' % (xbin_ledge[xbin - 1], x, xbin_ledge[xbin])
-        grid[xbin, ybin] += 1
+        grid[ybin, xbin] += 1
 
 print '%d LRGs thrown out.' % oob_lrgs
 print '%d total LRGs.' % len(pairs)
