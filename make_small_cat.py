@@ -7,6 +7,7 @@ pair_path = '/data2/scratch/pairs_6_10.txt'
 out_path = '/home/chadavis/catalog_creation/'
 neighbor_ra_ind = 2
 neighbor_dec_ind = 3
+neighbor_z_ind = 4
 num_pairs = 10
 
 neighbors = np.loadtxt(neighbor_path)
@@ -14,11 +15,11 @@ ids = np.array(neighbors[:,0], dtype = np.int64)
 
 pairs = np.loadtxt(pair_path, skiprows = 1)
 
-objects = np.zeros(shape=(len(neighbors), 4))
+objects = np.zeros(shape=(len(neighbors), 5))
 objects[:,0] = neighbors[:,0] #id
-objects[:,1] = neighbors[:,neighbor_ra_ind] #ra
-objects[:,2] = neighbors[:,neighbor_dec_ind] #dec
-objects[:,3] = neighbors[:,4] #z
+objects[:,2] = neighbors[:,neighbor_ra_ind] #ra
+objects[:,3] = neighbors[:,neighbor_dec_ind] #dec
+objects[:,4] = neighbors[:,neighbor_z_ind] #z
 
 objects = np.array(sorted(objects, key = lambda x: x[0]), dtype=np.float64)
 ids = sorted(ids)
