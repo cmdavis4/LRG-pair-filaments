@@ -12,8 +12,8 @@ from spherical_geo import to_sphere, to_cartesian, rotate, calc_distance
 from user_settings import project_path
 
 pair_range = range(10000, 11000)
-xbins = 10
-ybins = 10
+xbins = 11
+ybins = 11
 xinc = 6. / xbins
 yinc = 6. / ybins
 xbin_ledge = np.linspace(-3, 3, xbins)
