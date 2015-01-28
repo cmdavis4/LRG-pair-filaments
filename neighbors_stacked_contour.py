@@ -12,8 +12,8 @@ from spherical_geo import to_sphere, to_cartesian, rotate, calc_distance
 from user_settings import project_path
 
 pair_range = range(10000, 11000)
-xbins = 10
-ybins = 10
+xbins = 20
+ybins = 20
 xinc = 5. / xbins
 yinc = 5. / ybins
 xbin_ledge = np.linspace(-5, 5, xbins + 1)
@@ -23,9 +23,9 @@ ybin_ledge = ybin_ledge[1:]
 #print xbin_ledge
 
 neighbor_id_ind = 0
-neighbor_ra_ind = 1
-neighbor_dec_ind = 2
-neighbor_z_ind = 3
+neighbor_ra_ind = 2
+neighbor_dec_ind = 3
+neighbor_z_ind = 4
 lrg_id_ind = 0
 mid_ra_ind = 1
 mid_dec_ind = 2
@@ -67,7 +67,6 @@ outOfGrid = 0
 total_neighbs = 0
 oob_lrgs = 0
 for i in pair_range:
-    print i
     curr = pairs[i]
     lrg_id = curr[lrg_id_ind]
     ra_mid = np.radians(curr[mid_ra_ind])
@@ -77,13 +76,11 @@ for i in pair_range:
     ra_2 = np.radians(curr[lrg2_ra_ind])
     dec_2 = np.radians(curr[lrg2_dec_ind])
     lrg_add = angDiamDistSingle(curr[lrg_z_ind])
-    print '%f, %f' % (ra_mid, dec_mid)
     
     left_ind = bs.bisect_left(ids, np.int64(lrg_id))
     right_ind = bs.bisect(ids, np.int64(lrg_id))
     subset = objects[left_ind:right_ind]
     subset[:,1:3] = np.radians(subset[:,1:3])
-    #print(len(subset))
     total_neighbs+=len(subset)
     adds = np.zeros(len(subset))
     neighbs_rot = np.zeros((len(subset), 3))
@@ -91,8 +88,7 @@ for i in pair_range:
     right = np.array([1., ra_1, dec_1], dtype = np.float64)
 
     for j in range(len(subset)):
-        print calc_distance(ra_mid, dec_mid, subset[j, neighbor_ra_ind], subset[j, neighbor_dec_ind])
-        neighb = np.array([1., subset[j, neighbor_ra_ind], subset[j, neighbor_dec_ind]], dtype = np.float64)
+        neighb = np.array([1., subset[j, 1], subset[j, 2]], dtype = np.float64)
         mid_rot, right_rot, neighbs_rot[j,] = rotate(mid, right, neighb)
         adds[j] = angDiamDistSingle(subset[j,3])
     
@@ -131,6 +127,7 @@ print '%d LRGs thrown out.' % oob_lrgs
 print '%d total LRGs.' % len(pairs)
 print '%d neighbors thrown out.' % outOfGrid
 print '%d total neighbors.' % total_neighbs
+#print grid
 
 fig = plt.figure()
 ax = fig.add_subplot(1, 1, 1)
@@ -152,6 +149,6 @@ plt.title('Objects neighboring LRG pairs %d through %d'
 ax.add_artist(circ_1)
 ax.add_artist(circ_2)
 ax.add_artist(circ_mid)
-plt.savefig(out_dir + '/scatter_scaled_stacked_%d_%d'
+plt.savefig(out_dir + 'scatter_scaled_stacked_%d_%d'
             % (min(pair_range), max(pair_range)))
 plt.show()
