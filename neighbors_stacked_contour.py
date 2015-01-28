@@ -16,8 +16,8 @@ xbins = 10
 ybins = 10
 xinc = 6. / xbins
 yinc = 6. / ybins
-xbin_ledge = np.linspace(-3, 3, xbins + 1)
-ybin_ledge = np.linspace(-3, 3, ybins + 1)
+xbin_ledge = np.linspace(-3, 3, xbins)
+ybin_ledge = np.linspace(-3, 3, ybins)
 xbin_ledge = xbin_ledge[1:]
 ybin_ledge = ybin_ledge[1:]
 
