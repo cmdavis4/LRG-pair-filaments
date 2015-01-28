@@ -11,6 +11,7 @@
 #---------------------------------------
 
 import numpy as np
+import numpy.linalg as LA
 
 def to_sphere(point):
     """accepts a x,y,z, coordinate and returns the same point in spherical coords (r, theta, phi) i.e. (r, azimuthal angle, altitude angle) with phi=0 in the zhat direction and theta=0 in the xhat direction"""

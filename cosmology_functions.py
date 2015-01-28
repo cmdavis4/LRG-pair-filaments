@@ -9,7 +9,9 @@
 #---------------------------------------
 
 # local imports
-from cosmology_settings import cosmology_params as cosmo_params
+from cosmology_settings import cosmology_params as cosmo_param
+import scipy.integrate as si
+import math
 
 def angDiamDistSingle(z):
     """Angular diameter distance of an object at redshift z"""
