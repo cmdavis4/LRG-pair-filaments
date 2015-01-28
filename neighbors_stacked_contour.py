@@ -65,7 +65,7 @@ ids = sorted(ids)
 xs = []
 ys = []
 offset = 0
-grid = np.zeros(shape=(xbins, ybins))
+grid = np.zeros(shape=(ybins, xbins))
 outOfGrid = 0
 total_neighbs = 0
 oob_lrgs = 0
