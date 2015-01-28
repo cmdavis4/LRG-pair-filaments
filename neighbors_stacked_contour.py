@@ -16,14 +16,16 @@ xbins = 10
 ybins = 10
 xinc = 6. / xbins
 yinc = 6. / ybins
-xbin_ledge = np.linspace(-3, 3, xbins + 1)
-ybin_ledge = np.linspace(-3, 3, ybins + 1)
+xbin_ledge = np.linspace(-5, 5, xbins + 1)
+ybin_ledge = np.linspace(-5, 5, ybins + 1)
 xbin_ledge = xbin_ledge[1:]
 ybin_ledge = ybin_ledge[1:]
+print xbin_ledge
 
 neighbor_id_ind = 0
 neighbor_ra_ind = 1
 neighbor_dec_ind = 2
+neighbor_z_ind = 3
 lrg_id_ind = 0
 mid_ra_ind = 1
 mid_dec_ind = 2
@@ -137,8 +139,8 @@ print '%d total neighbors.' % total_neighbs
 
 fig = plt.figure()
 ax = fig.add_subplot(1, 1, 1)
-circ_1 = plt.Circle((.5, 0), radius = .05, color = 'b')
-circ_2 = plt.Circle((-.5, 0), radius = .05, color = 'g')
+circ_1 = plt.Circle((1, 0), radius = .05, color = 'b')
+circ_2 = plt.Circle((-1, 0), radius = .05, color = 'g')
 circ_mid = plt.Circle((0, 0), radius = .05, color = 'r')
 
 #plt.scatter(xs, ys)
