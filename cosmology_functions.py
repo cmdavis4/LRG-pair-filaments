@@ -18,7 +18,7 @@ def angDiamDistSingle(z):
     E_inv = lambda z: 1. / math.sqrt((cosmo_param['omega_m'] * (1. + z)**3) + (cosmo_param['omega_k'] * (1+z)**2) + cosmo_param['omega_l'])
     Dc = cosmo_param['Dh'] * si.quad(E_inv, 0, z)[0]
     Dm = Dc
-    Da = (Dm / (1. + z)) * (1. / .7)
+    Da = (Dm / (1. + z))# * (1. / .7)
     return Da
 
 
