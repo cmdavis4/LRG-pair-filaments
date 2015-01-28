@@ -138,8 +138,8 @@ print '%d total neighbors.' % total_neighbs
 
 fig = plt.figure()
 ax = fig.add_subplot(1, 1, 1)
-circ_1 = plt.Circle((.5, 0), radius = .05, color = 'b')
-circ_2 = plt.Circle((-.5, 0), radius = .05, color = 'g')
+circ_1 = plt.Circle((.6, 0), radius = .05, color = 'b')
+circ_2 = plt.Circle((-.6, 0), radius = .05, color = 'g')
 circ_mid = plt.Circle((0, 0), radius = .05, color = 'r')
 
 #plt.scatter(xs, ys)
