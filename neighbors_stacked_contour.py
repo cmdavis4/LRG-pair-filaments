@@ -24,6 +24,7 @@ ybin_ledge = ybin_ledge[1:]
 neighbor_id_ind = 0
 neighbor_ra_ind = 1
 neighbor_dec_ind = 2
+neighbor_z_ind = 3
 lrg_id_ind = 0
 mid_ra_ind = 1
 mid_dec_ind = 2
