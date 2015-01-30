@@ -35,9 +35,9 @@ lrg1_dec_ind = 6
 lrg2_ra_ind = 10
 lrg2_dec_ind = 11
 
+out_dir = ''
 #neighbor_path = 'neighbors.cat'
 #pair_path = 'pairs.cat'
-out_dir = ''
 neighbor_path = '/home/chadavis/catalog_creation/astro_image_processing/LRG/data/ra_dec_z.cat'
 pair_path = '/data2/scratch/pairs_6_10.txt'
 neighbors = []
@@ -82,15 +82,12 @@ for i in pair_range:
     subset = objects[left_ind:right_ind]
     subset[:,1:3] = np.radians(subset[:,1:3])
     total_neighbs+=len(subset)
-    adds = np.zeros(len(subset))
-    neighbs_rot = np.zeros((len(subset), 3))
+    neighbs_unrot = np.ones((len(subset), 3))
+    neighbs_unrot[:,1:3] = subset[:,1:3]
     mid = np.array([1., ra_mid, dec_mid], dtype = np.float64)
     right = np.array([1., ra_1, dec_1], dtype = np.float64)
 
-    for j in range(len(subset)):
-        neighb = np.array([1., subset[j, 1], subset[j, 2]], dtype = np.float64)
-        mid_rot, right_rot, neighbs_rot[j,] = rotate(mid, right, neighb)
-        adds[j] = angDiamDistSingle(subset[j,3])
+    neighbs_rot = rotate(mid, right, neighbs_unrot)
     
     lrg_radius = calc_distance(mid_rot[1], mid_rot[2],
                                right_rot[1], right_rot[2]) * lrg_add
