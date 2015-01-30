@@ -87,8 +87,8 @@ for i in pair_range:
     mid = np.array([1., ra_mid, dec_mid], dtype = np.float64)
     right = np.array([1., ra_1, dec_1], dtype = np.float64)
 
-    neighbs_rot = rotate(mid, right, neighbs_unrot)
-    
+    mid_rot, right_rot, neighbs_rot = rotate(mid, right, neighbs_unrot)
+
     lrg_radius = calc_distance(mid_rot[1], mid_rot[2],
                                right_rot[1], right_rot[2]) * lrg_add
 

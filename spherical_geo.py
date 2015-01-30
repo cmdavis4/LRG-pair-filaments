@@ -64,7 +64,7 @@ s3:transformed vector of p3
 
     s1=to_sphere(s1)
     s2=to_sphere(s2)
-    s3=map(to_sphere, s3)
+    s3=np.array(map(to_sphere, s3))
     
     return s1, s2, s3
 
@@ -81,7 +81,3 @@ def calc_distance(ra1, dec1, ra2, dec2):
     denom = sin1 * sin2 + cos1 * cos2 * np.cos(lambda_diff)
     
     return np.arctan2(np.sqrt(num), denom)
-
-points2 = np.ones(shape=(2,3))
-points1 = np.ones(shape=(1,3))
-rotate([1, 1, 1], [1, 1, 1], points2)
