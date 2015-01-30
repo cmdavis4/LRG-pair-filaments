@@ -42,28 +42,29 @@ s1:vector in (r, theta, phi) with p1 on the z axis
 s2:vector in (r,, theta, phi) with p2 on the phi-hat axis
 s3:transformed vector of p3
 """
-
     p1_cc=to_cartesian(p1) 
-    p2_cc=to_cartesian(p2) 
-    p3_cc=to_cartesian(p3) 
+    p2_cc=to_cartesian(p2)
+    p3_cc=map(to_cartesian, p3)
 
     p1norm = p1_cc/LA.norm(p1_cc)
     p2norm = p2_cc/LA.norm(p2_cc)
-    p3norm = p3_cc/LA.norm(p3_cc)
+    p3norm = map(lambda x: x/LA.norm(x), p3_cc)
     
     zhat_new =  p1norm
     x_new = p2norm - np.dot(p2norm, p1norm) * p1norm
     xhat_new = x_new/LA.norm(x_new)
-    
     yhat_new = np.cross(zhat_new, xhat_new)
     
-    s1 = np.array(map(lambda x: np.dot(x, p1_cc), (xhat_new, yhat_new, zhat_new)))
-    s2 = np.array(map(lambda x: np.dot(x, p2_cc), (xhat_new, yhat_new, zhat_new)))
-    s3 = np.array(map(lambda x: np.dot(x, p3_cc), (xhat_new, yhat_new, zhat_new)))
+    dot_with_units = lambda x: [np.dot(x, xhat_new), np.dot(x, yhat_new),
+                                np.dot(x, zhat_new)]
+    
+    s1 = np.array(dot_with_units(p1_cc))
+    s2 = np.array(dot_with_units(p2_cc))
+    s3 = np.array(map(dot_with_units, p3_cc))
 
-    s1=to_sphere(s1) 
-    s2=to_sphere(s2) 
-    s3=to_sphere(s3)
+    s1=to_sphere(s1)
+    s2=to_sphere(s2)
+    s3=map(to_sphere, s3)
     
     return s1, s2, s3
 
@@ -80,3 +81,7 @@ def calc_distance(ra1, dec1, ra2, dec2):
     denom = sin1 * sin2 + cos1 * cos2 * np.cos(lambda_diff)
     
     return np.arctan2(np.sqrt(num), denom)
+
+points2 = np.ones(shape=(2,3))
+points1 = np.ones(shape=(1,3))
+rotate([1, 1, 1], [1, 1, 1], points2)
