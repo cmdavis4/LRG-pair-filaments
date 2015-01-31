@@ -5,6 +5,7 @@ import bisect as bs
 neighbor_path = '/home/chadavis/catalog_creation/astro_image_processing/LRG/data/ra_dec_z.cat'
 pair_path = '/data2/scratch/pairs_6_10.txt'
 out_path = '/home/chadavis/catalog_creation/'
+neighbor_id_ind = 0
 neighbor_ra_ind = 2
 neighbor_dec_ind = 3
 neighbor_z_ind = 4
@@ -16,10 +17,10 @@ ids = np.array(neighbors[:,0], dtype = np.int64)
 pairs = np.loadtxt(pair_path, skiprows = 1)
 
 objects = np.zeros(shape=(len(neighbors), 5))
-objects[:,0] = neighbors[:,0] #id
-objects[:,2] = neighbors[:,neighbor_ra_ind] #ra
-objects[:,3] = neighbors[:,neighbor_dec_ind] #dec
-objects[:,4] = neighbors[:,neighbor_z_ind] #z
+objects[:,neighbor_id_ind] = neighbors[:,neighbor_id_ind] #id
+objects[:,neighbor_ra_ind] = neighbors[:,neighbor_ra_ind] #ra
+objects[:,neighbor_dec_ind] = neighbors[:,neighbor_dec_ind] #dec
+objects[:,neighbor_z_ind] = neighbors[:,neighbor_z_ind] #z
 
 objects = np.array(sorted(objects, key = lambda x: x[0]), dtype=np.float64)
 ids = sorted(ids)
