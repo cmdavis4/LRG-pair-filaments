@@ -68,16 +68,21 @@ s3:transformed vector of p3
     
     return s1, s2, s3
 
-
-def calc_distance(ra1, dec1, ra2, dec2):
+def calc_distance(center, points):
     '''Calculate the circular angular distance of two points on a sphere.'''
-    lambda_diff = ra1  - ra2
-    cos1 = np.cos(dec1)
-    cos2 = np.cos(dec2)
-    sin1 = np.sin(dec1)
-    sin2 = np.sin(dec2)
+    center = np.array(center)
+    points = np.array(points)
+    lambda_diff = center[0]  - points[:,0]
+    cos1 = np.cos(center[1])
+    cos2 = map(np.cos, points[:,1])
+    sin1 = np.sin(center[1])
+    sin2 = map(np.sin, points[:,1])
     
-    num = (cos2 * np.sin(lambda_diff)) ** 2.0 + (cos1 * sin2 - sin1 * cos2 * np.cos(lambda_diff)) ** 2.0
-    denom = sin1 * sin2 + cos1 * cos2 * np.cos(lambda_diff)
+    num1 = np.power(np.multiply(cos2, map(np.sin, lambda_diff)), 2.0)
+    num2 = np.subtract(np.multiply(cos1, sin2), np.multiply(np.multiply(sin1, cos2), map(np.cos, lambda_diff)))
+    num = np.add(num1, np.power(num2, 2.0))
+    denom1 = np.multiply(sin1, sin2)
+    denom2 = np.multiply(np.multiply(cos1, cos2), map(np.cos, lambda_diff))
+    denom = np.add(denom1, denom2)
     
-    return np.arctan2(np.sqrt(num), denom)
+    return map(np.arctan2, map(np.sqrt, num), denom)
