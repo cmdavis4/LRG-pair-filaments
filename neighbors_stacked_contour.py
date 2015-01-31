@@ -11,7 +11,7 @@ from cosmology_functions import angDiamDistSingle, angDiamDist
 from spherical_geo import to_sphere, to_cartesian, rotate, calc_distance
 from user_settings import project_path
 
-pair_range = range(10000, 11000)
+pair_range = range(0, 9)
 xbins = 20
 ybins = 20
 xinc = 5. / xbins
@@ -36,10 +36,10 @@ lrg2_ra_ind = 10
 lrg2_dec_ind = 11
 
 out_dir = ''
-#neighbor_path = 'neighbors.cat'
-#pair_path = 'pairs.cat'
-neighbor_path = '/home/chadavis/catalog_creation/astro_image_processing/LRG/data/ra_dec_z.cat'
-pair_path = '/data2/scratch/pairs_6_10.txt'
+neighbor_path = 'neighbors.cat'
+pair_path = 'pairs.cat'
+#neighbor_path = '/home/chadavis/catalog_creation/astro_image_processing/LRG/data/ra_dec_z.cat'
+#pair_path = '/data2/scratch/pairs_6_10.txt'
 neighbors = []
 
 print('Reading neighbors...')
@@ -59,8 +59,8 @@ print('Sorting neighbors...')
 objects = np.array(sorted(objects, key = lambda x: x[0]), dtype=np.float64)
 ids = sorted(ids)
 
-xs = []
-ys = []
+xs = np.array([])
+ys = np.array([])
 offset = 0
 grid = np.zeros(shape=(xbins, ybins))
 outOfGrid = 0
@@ -88,38 +88,35 @@ for i in pair_range:
     right = np.array([1., ra_1, dec_1], dtype = np.float64)
 
     mid_rot, right_rot, neighbs_rot = rotate(mid, right, neighbs_unrot)
+    
+    lrg_radius = calc_distance((mid_rot[1], mid_rot[2]),
+                               [(right_rot[1], right_rot[2])])[0] * lrg_add
 
-    lrg_radius = calc_distance(mid_rot[1], mid_rot[2],
-                               right_rot[1], right_rot[2]) * lrg_add
 
     if (lrg_radius > 5 or lrg_radius < 3):
         oob_lrgs+=1
         continue
     #print lrg_radius
 
-    for j in range(len(subset)):
-        #print mid_rot
-        #print neighbs_rot[j]
-        r = calc_distance(mid_rot[1], mid_rot[2],
-                          neighbs_rot[j, 1], neighbs_rot[j, 2]) * lrg_add
-        #print r
-        if (r < -15 or r > 15):
-            outOfGrid += 1
-            continue
-        scaled_radius = r / lrg_radius
-        x = np.cos(neighbs_rot[j, 1]) * scaled_radius
-        y = np.sin(neighbs_rot[j, 1]) * scaled_radius
-        
-        xs.append(x)
-        ys.append(y)
-        
-        #print '%f, %f' % (x, y)
-        #print ''
-        xbin = bs.bisect(xbin_ledge, x)
-        ybin = bs.bisect(ybin_ledge, y)
-        #print '%f : %f : %f' % (xbin_ledge[xbin - 1], x, xbin_ledge[xbin])
-        grid[ybin, xbin] += 1
-
+    r = calc_distance((mid_rot[1], mid_rot[2]), (neighbs_rot[:,1:]))
+    r = np.multiply(r, lrg_add)
+    oob_inds = np.where((r < -15) | (r > 15))[0]
+    outOfGrid += len(oob_inds)
+    r = np.delete(r, oob_inds)
+    scaled_radii = np.divide(r, lrg_radius)
+    x = np.multiply(map(np.cos, neighbs_rot[:,1]), scaled_radii)
+    y = np.multiply(map(np.sin, neighbs_rot[:,1]), scaled_radii)
+    
+    xs = np.hstack((xs, x))
+    ys = np.hstack((ys, y))
+    
+    xbs = map(lambda j: bs.bisect(xbin_ledge, j), x)
+    ybs = map(lambda j: bs.bisect(ybin_ledge, j), y)
+    def add_to_bins(ybin, xbin):
+        grid[ybin, xbin] +=1
+        return
+    map(add_to_bins, ybs, xbs)
+    
 print '%d LRGs thrown out.' % oob_lrgs
 print '%d total LRGs.' % len(pairs)
 print '%d neighbors thrown out.' % outOfGrid
@@ -146,6 +143,6 @@ plt.title('Objects neighboring LRG pairs %d through %d'
 ax.add_artist(circ_1)
 ax.add_artist(circ_2)
 ax.add_artist(circ_mid)
-plt.savefig(out_dir + 'scatter_scaled_stacked_%d_%d'
-            % (min(pair_range), max(pair_range)))
+#plt.savefig(out_dir + 'scatter_scaled_stacked_%d_%d'
+#            % (min(pair_range), max(pair_range)))
 plt.show()
