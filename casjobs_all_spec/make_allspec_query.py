@@ -50,19 +50,17 @@ def mid_query():
     return """p.objid, (p.flags & @bad_flags)  as badflag,  
 p.run,p.rerun,p.camCol,p.field,p.obj, s.specobjid, s.plate, s.mjd, s.fiberid,  
 p.ra as ra_gal, p.dec as dec_gal, s.z, 
-p.petroR50_g, p.petroR50_r, p.petroR50_i
+p.petroR50_g, p.petroR50_r, p.petroR50_i,
 p.petroMag_g, p.petroMag_r, p.petroMag_i,
 p.extinction_g, p.extinction_r, p.extinction_i,
 x.z as photoz, x.zErr as photoz_err,
-x.kcorr_g,x.kcorr_r,x.kcorr_i
+x.kcorrG,x.kcorrR,x.kcorrI
 INTO
 mydb.{tablename}
 FROM
-(photoobj as p LEFT OUTER JOIN SpecObj as s on p.objID = s.BestObjID) 
-LEFT OUTER JOIN Photoz as x on x.objid =p.objid, chunk c,  field f, segment g
+(PhotoPrimary as p LEFT OUTER JOIN SpecObj as s on p.objID = s.BestObjID) 
+LEFT OUTER JOIN Photoz as x on x.objid =p.objid
 WHERE
-g.segmentID = f.segmentID and
-f.fieldID = p.fieldID and  c.chunkID=g.chunkID
 """ 
 
 def end_query():
@@ -70,13 +68,13 @@ def end_query():
     return """ORDER BY p.objid\n"""
 
 def catalog_query(job_info):
-    """Takes a dictionary called job_info, with relevant target, chunksize, and starting point and returns the chunk of size chunksize containing galaxies with objid>starting point. Searches for galaxies with PetroMag_r-extinction_r between 14 and 17.77 that are part of the spectroscopic database"""
+    """Takes a dictionary called job_info, with relevant target, chunksize, and starting point and returns the chunk of size chunksize containing galaxies with objid>starting point. Searches for galaxies with PetroMag_r-extinction_r <= 17.77 that are part of the spectroscopic database"""
 
     out = start_query()
     out += "top {chunk}\n"
     out += mid_query()
-    out += """and p.objid > {lastnum} and 
-(p.petroMag_r - p.extinction_r) between 14.0 and 17.77 and p.type = 3 and s.specclass = 2\n""" 
+    out += """ p.objid > {lastnum} and 
+(p.petroMag_r - p.extinction_r) <= 17.77 and p.type = 3 and s.class = 'GALAXY'\n""" 
     out += end_query()  
 
     try:

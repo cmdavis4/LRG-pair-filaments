@@ -65,7 +65,7 @@ default_queue=1
 default_days=1
 verbose=true
 debug=false
-jobs_location=http://skyserver.sdss3.org/casjobs/services/jobs.asmx
+jobs_location=http://skyserver.sdss.org/casjobs/services/jobs.asmx
 """.format(**casjobs_info)
     
     config_file = open('CasJobs.config','w')
@@ -87,7 +87,7 @@ def casjobs(gal_cat, casjobs_info):
                 'casjobs':casjobs,
                 'table_count':0,
                 'lastnum':'-99',
-                'chunk':100#10000
+                'chunk':1000000
                 }
     
     while True:
@@ -115,7 +115,6 @@ def casjobs(gal_cat, casjobs_info):
         print job_info['cmd']
         casjobs_out = exec_cmd(job_info['cmd'])
         print casjobs_out
-        raw_input()
         down_file = get_filename(casjobs_out)
         cmd = 'cat %s >> %s' %(down_file, 
                                gal_cat['data_dir']+gal_cat['filename'])
@@ -125,8 +124,6 @@ def casjobs(gal_cat, casjobs_info):
         os.system('rm %s' %down_file)
         if num_out<chunk:
             break #because we must be at the end of the list
-        if job_info['table_count']>1:
-            break
     return 0
     
 def get_file_info(filename):
