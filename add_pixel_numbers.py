@@ -6,13 +6,15 @@ neighbors_path = '/data3/LRGPairs/dr10_allspec.csv'
 out_dir = '/home/chadavis/catalog_creation/LRG-pair-filaments/'
 out_filename='neighbors_with_pix.csv'
 res=16
+ra_ind = 11
+dec_ind = 12
 
 print 'Reading neighbors...'
 n = np.genfromtxt(neighbors_path, delimiter=',', dtype=str)
 
 print 'Calculating pixels...'
-ras = np.radians(n[1:,11].astype(np.float64))
-decs = (np.radians(n[1:,12].astype(np.float64)) - (np.pi / 2.)) * -1.
+ras = np.radians(n[1:,ra_ind].astype(np.float64))
+decs = (np.radians(n[1:,dec_ind].astype(np.float64)) - (np.pi / 2.)) * -1.
 pix = hp.ang2pix(res, decs, ras)
 pix = pix.reshape(len(pix), 1)
 out = np.hstack((n[1:,], pix.astype(str)))
