@@ -2,15 +2,16 @@ import numpy as np
 import healpy as hp
 import sys
 
-neighbors_path = '/data3/LRGPairs/dr10_allspec.csv'
+in_path = '/data2/scratch/pairs_6_10.txt'
 out_dir = '/home/chadavis/catalog_creation/LRG-pair-filaments/'
-out_filename='neighbors_with_pix.csv'
+out_filename='pairs_with_pix.csv'
 res=16
-ra_ind = 11
-dec_ind = 12
+ra_ind = 1
+dec_ind = 2
+dlim = ' '
 
 print 'Reading neighbors...'
-n = np.genfromtxt(neighbors_path, delimiter=',', dtype=str)
+n = np.genfromtxt(in_path, dtype=str, delimiter=dlim)
 
 print 'Calculating pixels...'
 ras = np.radians(n[1:,ra_ind].astype(np.float64))
