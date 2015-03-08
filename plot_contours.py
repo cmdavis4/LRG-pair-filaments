@@ -1,0 +1,116 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import bisect as bs
+import math
+import scipy.integrate as si
+import numpy.linalg as LA
+
+# local imports
+from cosmology_settings import cosmology_params as cosmo_params
+from cosmology_functions import angDiamDistSingle, angDiamDist
+from spherical_geo import to_sphere, to_cartesian, rotate, calc_distance
+from user_settings import project_path
+
+testing = True
+prange = range(9)
+
+xbins = 20
+ybins = 20
+xinc = 5. / xbins
+yinc = 5. / ybins
+xbin_ledge = np.linspace(-5, 5, xbins + 1)
+ybin_ledge = np.linspace(-5, 5, ybins + 1)
+xbin_ledge = xbin_ledge[1:]
+ybin_ledge = ybin_ledge[1:]
+
+out_dir = ''
+neighbor_path = '/home/chadavis/catalog_creation/LRG-pair-filaments/matches/matches_3.8.15_complete_nside16.csv'
+pair_path = '/home/chadavis/catalog_creation/LRG-pair-filaments/pairs_with_pix.csv'
+
+print 'Reading neighbors...'
+neighbors = np.genfromtxt(neighbor_path, delimiter=',', names=True)
+
+print 'Reading pairs...'
+pairs = np.genfromtxt(pair_path, delimiter=',', names=True)    
+
+class neighbor:
+    def __init__(self, id, ra, dec, z):
+        self.id, self.ra, self.dec, self.z = int(id), ra, dec, z
+
+class pair:
+    def __init__(self, id, ra_1, dec_1, ra_2, dec_2, ra_mid, dec_mid, z):
+        (self.id, self.ra_1, self.dec_1, self.ra_2,
+         self.dec_2, self.ra_mid, self.dec_mid, self.z) = (
+                int(id), ra_1, dec_1, ra_2, dec_2, ra_mid, dec_mid, z
+                )
+
+print 'Generating neighbors...'
+neighbors = map(neighbor,
+                neighbors['id'], neighbors['ra_gal'],
+                neighbors['dec_gal'], neighbors['z'])
+
+print 'Generating pairs...'
+pairs = map(pair,
+            pairs['id'], pairs['ra_1'], pairs['dec_1'],
+            pairs['ra_2'], pairs['dec_2'], pairs['ra_mid'],
+            pairs['dec_mid'], pairs['z'])
+
+if testing:
+    pairs = pairs[prange]
+
+print 'Creating ID dictionary...'
+id_dict = {}
+for j in neighbors:
+    id_dict.setdefault(j.id, []).append(j)
+
+print 'Gridding...'
+for p in pairs:
+    n_unrot = id_dict[p.id]
+    mid = np.array([1., p.ra_mid, p.dec_mid], dtype=np.float64)
+    right = np.array([1., p.ra_1, p.dec_1], dtype=np.float64)
+    mid_rot, right_rot, n_rot = rotate(mid, right, n_unrot)
+    lrg_add = angDiamDistSingle(p.z)
+    lrg_radius = calc_distance(
+                    (mid_rot[1], mid_rot[2]),
+                    [(right_rot[1], right_rot[2])])[0] * lrg_add
+    thetas = calc_distance(
+                           (mid_rot[1], mid_rot[2]),
+                           zip(
+                               [x.ra_gal for x in n_rot],
+                               [x.dec_gal for x in n_rot]
+                               )
+                           )
+    rs = np.multiply(thetas, lrg_add)
+    scaled_rs = np.divide(rs, lrg_radius)
+    x = np.multiply(map(np.cos, [x.ra_gal for x in n_rot]), scaled_radii)
+    x = np.multiply(map(np.sin, [x.ra_gal for x in n_rot]), scaled_radii)
+    xbs = map(lambda j: bs.bisect(xbin_ledge, j), x)
+    ybs = map(lambda j: bs.bisect(ybin_ledge, j), y)
+    def add_to_bins(ybin, xbin):
+        grid[ybin, xbin] += 1
+        return
+    map(add_to_bins, ybs, xbs)
+    
+fig = plt.figure()
+ax = fig.add_subplot(1, 1, 1)
+circ_1 = plt.Circle((1, 0), radius = .05, color = 'b')
+circ_2 = plt.Circle((-1, 0), radius = .05, color = 'g')
+circ_mid = plt.Circle((0, 0), radius = .05, color = 'r')
+
+#plt.scatter(xs, ys)
+
+x = np.linspace(-5, 5, xbins)
+y = np.linspace(-5, 5, ybins)
+X, Y = np.meshgrid(x, y)
+plt.contour(x, y, grid)
+#plt.scatter(xs, ys)
+plt.xlabel('[R_sep]')
+plt.ylabel('[R_sep]')
+plt.title('Objects neighboring LRG pairs %d through %d'
+          % (min(pair_range), max(pair_range)))
+ax.add_artist(circ_1)
+ax.add_artist(circ_2)
+ax.add_artist(circ_mid)
+#plt.savefig(out_dir + 'scatter_scaled_stacked_%d_%d'
+#            % (min(pair_range), max(pair_range)))
+plt.show()
