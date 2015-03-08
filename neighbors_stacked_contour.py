@@ -22,10 +22,10 @@ xbin_ledge = xbin_ledge[1:]
 ybin_ledge = ybin_ledge[1:]
 #print xbin_ledge
 
-neighbor_id_ind = 0
-neighbor_ra_ind = 2
-neighbor_dec_ind = 3
-neighbor_z_ind = 4
+neighbor_id_ind = -1
+neighbor_ra_ind = 11
+neighbor_dec_ind = 12
+neighbor_z_ind = 13
 lrg_id_ind = 0
 mid_ra_ind = 1
 mid_dec_ind = 2
@@ -36,18 +36,18 @@ lrg2_ra_ind = 10
 lrg2_dec_ind = 11
 
 out_dir = ''
-neighbor_path = 'neighbors.cat'
-pair_path = 'pairs.cat'
+neighbor_path = '/home/chadavis/catalog_creation/LRG-pair-filaments/matches/matches_3.8.15_complete_nside16.csv'
+pair_path = '/home/chadavis/catalog_creation/LRG-pair-filaments/pairs_with_pix.csv'
 #neighbor_path = '/home/chadavis/catalog_creation/astro_image_processing/LRG/data/ra_dec_z.cat'
 #pair_path = '/data2/scratch/pairs_6_10.txt'
-neighbors = []
 
 print('Reading neighbors...')
-neighbors = np.loadtxt(neighbor_path)
-ids = np.array(neighbors[:,0], dtype = np.int64)        
+neighbors = np.loadtxt(neighbor_path, delimiter=',')
+ids = np.array(neighbors[:,neighbor_id_ind], dtype = np.int64)        
 
 print('Reading pairs...')
-pairs = np.loadtxt(pair_path, skiprows = 1)
+pairs = np.loadtxt(pair_path)
+
 
 objects = np.zeros(shape=(len(neighbors), 4))
 objects[:,0] = neighbors[:,neighbor_id_ind] #id
@@ -66,6 +66,12 @@ grid = np.zeros(shape=(xbins, ybins))
 outOfGrid = 0
 total_neighbs = 0
 oob_lrgs = 0
+
+print('Creating match dictionary...')
+idDict = {}
+for j in range(len(objects)):
+    idDict.setdefault(ids[j], []).append(j)
+
 for i in pair_range:
     curr = pairs[i]
     lrg_id = curr[lrg_id_ind]
