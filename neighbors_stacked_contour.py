@@ -36,18 +36,17 @@ lrg2_ra_ind = 10
 lrg2_dec_ind = 11
 
 out_dir = ''
-neighbor_path = '/home/chadavis/catalog_creation/LRG-pair-filaments/matches/matches_3.8.15_complete_nside16.csv'
-pair_path = '/home/chadavis/catalog_creation/LRG-pair-filaments/pairs_with_pix.csv'
-#neighbor_path = '/home/chadavis/catalog_creation/astro_image_processing/LRG/data/ra_dec_z.cat'
-#pair_path = '/data2/scratch/pairs_6_10.txt'
+#neighbor_path = '/home/chadavis/catalog_creation/LRG-pair-filaments/matches/matches_3.8.15_complete_nside16.csv'
+#pair_path = '/home/chadavis/catalog_creation/LRG-pair-filaments/pairs_with_pix.csv'
+neighbor_path = '/home/chadavis/catalog_creation/LRG-pair-filaments/small_neighbors.csv'
+pair_path = '/home/chadavis/catalog_creation/LRG-pair-filaments/small_pairs.csv'
 
 print('Reading neighbors...')
 neighbors = np.loadtxt(neighbor_path, delimiter=',')
-ids = np.array(neighbors[:,neighbor_id_ind], dtype = np.int64)        
+ids = np.array(neighbors[:,neighbor_id_ind]).astype(int)
 
 print('Reading pairs...')
-pairs = np.loadtxt(pair_path)
-
+pairs = np.loadtxt(pair_path, delimiter=',')
 
 objects = np.zeros(shape=(len(neighbors), 4))
 objects[:,0] = neighbors[:,neighbor_id_ind] #id
@@ -83,9 +82,8 @@ for i in pair_range:
     dec_2 = np.radians(curr[lrg2_dec_ind])
     lrg_add = angDiamDistSingle(curr[lrg_z_ind])
     
-    left_ind = bs.bisect_left(ids, np.int64(lrg_id))
-    right_ind = bs.bisect(ids, np.int64(lrg_id))
-    subset = objects[left_ind:right_ind]
+    ind_range = idDict[int(lrg_id)]
+    subset = np.array([objects[j] for j in ind_range])
     subset[:,1:3] = np.radians(subset[:,1:3])
     total_neighbs+=len(subset)
     neighbs_unrot = np.ones((len(subset), 3))
@@ -105,10 +103,12 @@ for i in pair_range:
     #print lrg_radius
 
     r = calc_distance((mid_rot[1], mid_rot[2]), (neighbs_rot[:,1:]))
-    r = np.multiply(r, lrg_add)
+    adds = map(angDiamDistSingle, subset[:,3])
+    r = np.multiply(r, adds)
     oob_inds = np.where((r < -15) | (r > 15))[0]
     outOfGrid += len(oob_inds)
     r = np.delete(r, oob_inds)
+    neighbs_rot = np.delete(neighbs_rot, oob_inds, axis=0)
     scaled_radii = np.divide(r, lrg_radius)
     x = np.multiply(map(np.cos, neighbs_rot[:,1]), scaled_radii)
     y = np.multiply(map(np.sin, neighbs_rot[:,1]), scaled_radii)
