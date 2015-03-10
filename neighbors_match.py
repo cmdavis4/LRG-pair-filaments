@@ -20,7 +20,7 @@ y = int(time.strftime("%y"))
 
 chunks = 600
 chunknum = int(os.environ['SGE_TASK_ID']) - 1
-#chunknum = 0
+#chunknum = 5
 
 print ''
 print 'Chunk #%d' % chunknum
@@ -71,7 +71,13 @@ def matchPix(p):
     return np.unique(inds).astype(int)
 
 def distance(ra_p, dec_p, ra_n, dec_n, z_n):
-    angle = sg.calc_distance((ra_p, dec_p), zip(ra_n, dec_n))
+    angle = sg.calc_distance(
+        (np.radians(ra_p), np.radians(dec_p)),
+        zip(
+        map(np.radians, ra_n),
+        map(np.radians, dec_n)
+        )
+        )
     adds = map(cf.angDiamDistSingle, z_n)
     return np.multiply(angle, adds)
 
@@ -83,6 +89,8 @@ for j in range(len(pix_nums)):
     pixDict.setdefault(pix_nums[j],[]).append(j)
     
 matches = []
+
+noneighbs = 0
 
 print 'Matching...'
 for p in pairs:
@@ -101,12 +109,17 @@ for p in pairs:
                          candidates[:,dec_gal].astype(float),
                          candidates[:,z].astype(float))
     inbounds = neighbors[inds[distances <= 15]]
+    print '%d / %d' % (len(inbounds), len(inds))
+    if len(inbounds) == 0:
+        noneighbs+=1
+        continue
     inbounds = inbounds[np.where(inbounds[:,nobjid] != p[pobjid])[0]]
     idnum_arr = np.array([p[lrgid]] * np.shape(inbounds)[0]).reshape(np.shape(inbounds)[0], 1)
     inbounds = np.hstack((inbounds, idnum_arr))
     matches.append(inbounds)
 
 matches = np.concatenate(matches)
-print('Writing...')
+print 'Writing...'
 np.savetxt(out_dir + out_name, matches, fmt='%s', delimiter=',')
-print('Written.')
+print 'Written.'
+print '%d w/o neighbors.' % noneighbs
