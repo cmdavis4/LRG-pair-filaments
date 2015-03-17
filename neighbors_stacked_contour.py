@@ -10,6 +10,7 @@ from cosmology_settings import cosmology_params as cosmo_params
 from cosmology_functions import angDiamDistSingle, angDiamDist
 from spherical_geo import to_sphere, to_cartesian, rotate, calc_distance
 from user_settings import project_path
+from healpy_settings import healpy_params as hpp
 
 pair_range = range(0, 9)
 xbins = 20
@@ -35,18 +36,21 @@ lrg1_dec_ind = 6
 lrg2_ra_ind = 10
 lrg2_dec_ind = 11
 
-out_dir = ''
-#neighbor_path = '/home/chadavis/catalog_creation/LRG-pair-filaments/matches/matches_3.8.15_complete_nside16.csv'
-#pair_path = '/home/chadavis/catalog_creation/LRG-pair-filaments/pairs_with_pix.csv'
-neighbor_path = '/home/chadavis/catalog_creation/LRG-pair-filaments/small_neighbors.csv'
-pair_path = '/home/chadavis/catalog_creation/LRG-pair-filaments/small_pairs.csv'
+out_dir = '/home/chadavis/catalog_creation/LRG-pair-filaments/results/'
+neighbor_path = '/home/chadavis/catalog_creation/LRG-pair-filaments/matches/matches_nside%d_%s_adds_%s_complete.csv' % (hpp['NSIDE'], 'neighbor' if hpp['USE_NEIGHBOR_ADDS'] else 'pair', 'real' if hpp['REAL_PAIRS'] else 'fake')
+pair_path = '/home/chadavis/catalog_creation/LRG-pair-filaments/pairs_with_pix.csv'
+#neighbor_path = '/home/chadavis/catalog_creation/LRG-pair-filaments/small_neighbors.csv'
+#pair_path = '/home/chadavis/catalog_creation/LRG-pair-filaments/small_pairs.csv'
+plot_name = '%s_nside%d_%s_adds.png' % ('true' if hpp['REAL_PAIRS'] else 'fake', hpp['NSIDE'], 'neighbor' if hpp['USE_NEIGHBOR_ADDS'] else 'pair')
+grid_name = '%s_nside%d_%s_adds.csv' % ('true' if hpp['REAL_PAIRS'] else 'fake', hpp['NSIDE'], 'neighbor' if hpp['USE_NEIGHBOR_ADDS'] else 'pair')
+
 
 print('Reading neighbors...')
 neighbors = np.loadtxt(neighbor_path, delimiter=',')
 ids = np.array(neighbors[:,neighbor_id_ind]).astype(int)
 
 print('Reading pairs...')
-pairs = np.loadtxt(pair_path, delimiter=',')
+pairs = np.loadtxt(pair_path, delimiter=',', skiprows=1)
 
 objects = np.zeros(shape=(len(neighbors), 4))
 objects[:,0] = neighbors[:,neighbor_id_ind] #id
@@ -81,8 +85,11 @@ for i in pair_range:
     ra_2 = np.radians(curr[lrg2_ra_ind])
     dec_2 = np.radians(curr[lrg2_dec_ind])
     lrg_add = angDiamDistSingle(curr[lrg_z_ind])
-    
-    ind_range = idDict[int(lrg_id)]
+
+    try:
+        ind_range = idDict[int(lrg_id)]
+    except KeyError:
+        continue
     subset = np.array([objects[j] for j in ind_range])
     subset[:,1:3] = np.radians(subset[:,1:3])
     total_neighbs+=len(subset)
@@ -103,7 +110,10 @@ for i in pair_range:
     #print lrg_radius
 
     r = calc_distance((mid_rot[1], mid_rot[2]), (neighbs_rot[:,1:]))
-    adds = map(angDiamDistSingle, subset[:,3])
+    if hpp['USE_NEIGHBOR_ADDS']:
+        adds = map(angDiamDistSingle, subset[:,3])
+    else:
+        adds = np.array([lrg_add] * len(subset))
     r = np.multiply(r, adds)
     oob_inds = np.where((r < -15) | (r > 15))[0]
     outOfGrid += len(oob_inds)
@@ -129,6 +139,9 @@ print '%d neighbors thrown out.' % outOfGrid
 print '%d total neighbors.' % total_neighbs
 #print grid
 
+print 'Saving grid...'
+np.savetxt(out_dir + grid_name, grid, delimiter=',')
+
 fig = plt.figure()
 ax = fig.add_subplot(1, 1, 1)
 circ_1 = plt.Circle((1, 0), radius = .05, color = 'b')
@@ -149,6 +162,7 @@ plt.title('Objects neighboring LRG pairs %d through %d'
 ax.add_artist(circ_1)
 ax.add_artist(circ_2)
 ax.add_artist(circ_mid)
-#plt.savefig(out_dir + 'scatter_scaled_stacked_%d_%d'
-#            % (min(pair_range), max(pair_range)))
+
+print 'Saving contour plot...'
+plt.savefit(out_dir + plot_name)
 plt.show()
