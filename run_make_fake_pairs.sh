@@ -8,4 +8,4 @@
 #$ -l h_vmem=3G
 #$ -t 1-70
 
-./make_fake_pair_cat.py
+python make_fake_pair_cat.py
