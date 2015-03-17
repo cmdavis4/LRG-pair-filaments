@@ -8,11 +8,11 @@ import sys
 import os
 
 ndiv = 70
-#div = int(os.environ['SGE_TASK_ID']) - 1
-div = 0
+div = int(os.environ['SGE_TASK_ID']) - 1
+#div = 0
 
 indir = '/home/clampitt/filaments/'
-outdir = '/home/chadavis/catalog_creation/fake_cats/'
+outdir = '/home/chadavis/catalog_creation/LRG-pair-filaments/fake_cats/'
 
 dr = 100.
 
@@ -112,8 +112,8 @@ for i in this_id:
     for j in nbr:
         dec_mid = (dec_in[i] + dec_in[j]) / 2.
         ra_mid = (ra[i] + ra[j]) / 2. / np.cos(dec_in[i] * pi/180.) * 180./pi
-        row = np.hstack((ra_mid, dec_mid, (z[i]+z[j])/2., i, ra_in[i], dec_in[i],
-                         j, ra_in[j], dec_in[j], R_near[ct], drlos[ct], dz[ct]))
+        row = np.hstack((ra_mid, dec_mid, (z[i]+z[j])/2., i, ra_in[i], dec_in[i], z[i], 
+                         j, ra_in[j], dec_in[j], z[j], R_near[ct], drlos[ct], dz[ct]))
         ct = ct + 1
 
         if (j < i): continue                 # Assure each pair only counted once
