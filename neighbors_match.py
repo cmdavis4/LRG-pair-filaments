@@ -9,7 +9,10 @@ import sys
 import os
 
 n_path = '/home/chadavis/catalog_creation/LRG-pair-filaments/neighbors_with_pix.csv'
-p_path = '/home/chadavis/catalog_creation/LRG-pair-filaments/pairs_with_pix.csv'
+if hpparam['REAL_PAIRS']:
+    p_path = '/home/chadavis/catalog_creation/LRG-pair-filaments/pairs_with_pix.csv'
+else:
+    p_path = '/home/chadavis/catalog_creation/LRG-pair-filaments/fake_cats/sampled_cat.csv'
 out_dir = '/home/chadavis/catalog_creation/LRG-pair-filaments/matches/'
 
 NSIDE = hpparam['NSIDE']
@@ -25,7 +28,7 @@ chunknum = int(os.environ['SGE_TASK_ID']) - 1
 print ''
 print 'Chunk #%d' % chunknum
 
-out_name = 'matches_%d.%d.%d_%do%d_nside%d.csv' % (m, d, y, chunknum, chunks, NSIDE)
+out_name = 'matches_%do%d_nside%d_%s_adds_%s.csv' % (chunknum, chunks, NSIDE, 'neighbor' if hpparam['USE_NEIGHBOR_ADDS'] else 'pair', 'real' if hpparam['REAL_PAIRS'] else 'fake')
 
 print 'Reading neighbors...'
 neighbors = np.genfromtxt(n_path, delimiter=',', dtype=str)
@@ -46,6 +49,7 @@ pobjid = 7
 lrgid = 0
 ra_mid = 1
 dec_mid = 2
+pair_z = 3
 ra_gal = 11
 dec_gal = 12
 z = 13
@@ -62,13 +66,6 @@ Steps for one pair:
 '''
 
 matches = np.array([])
-
-def matchPix(p):
-    lind = lambda x: bs.bisect_left(neighbors[:,-1].astype(int), x)
-    rind = lambda x: bs.bisect_right(neighbors[:,-1].astype(int), x)
-    get_inds = lambda x: range(lind(x), rind(x))
-    inds = np.concatenate(map(get_inds, p))
-    return np.unique(inds).astype(int)
 
 def distance(ra_p, dec_p, ra_n, dec_n, z_n):
     angle = sg.calc_distance(
@@ -104,10 +101,16 @@ for p in pairs:
             pass
     inds = np.concatenate(inds).astype(int)
     candidates = neighbors[inds]
-    distances = distance(p[ra_mid].astype(float), p[dec_mid].astype(float),
-                         candidates[:,ra_gal].astype(float),
-                         candidates[:,dec_gal].astype(float),
-                         candidates[:,z].astype(float))
+    if hpparam['USE_NEIGHBOR_ADDS']:
+        distances = distance(p[ra_mid].astype(float), p[dec_mid].astype(float),
+                             candidates[:,ra_gal].astype(float),
+                             candidates[:,dec_gal].astype(float),
+                             candidates[:,z].astype(float))
+    else:
+        distances = distance(p[ra_mid].astype(float), p[dec_mid].astype(float),
+                             candidates[:,ra_gal].astype(float),
+                             candidates[:,dec_gal].astype(float),
+                             np.array([float(p[pair_z])] * len(candidates)))
     inbounds = neighbors[inds[distances <= 15]]
     print '%d / %d' % (len(inbounds), len(inds))
     if len(inbounds) == 0:
